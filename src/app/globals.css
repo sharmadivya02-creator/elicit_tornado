@@ -1,0 +1,318 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Share Tech Mono", "JetBrains Mono", ui-monospace, monospace;
+  --font-pixel: "Press Start 2P", monospace;
+  --font-tall: "VT323", monospace;
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: #070114;
+  color: white;
+  overflow-x: hidden;
+}
+
+/* Custom Retro Gaming Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b011d;
+  border-left: 2px solid #3b0764;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #7c3aed;
+  border: 2px solid #0b011d;
+  image-rendering: pixelated;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a78bfa;
+}
+
+/* Custom Animations */
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow: 0 0 4px #fbbf24, 0 0 10px #fbbf24, 0 0 20px #f59e0b, 0 0 40px #f59e0b;
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+.animate-neon {
+  animation: neon-flicker 5s infinite alternate;
+}
+
+@keyframes grid-move {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 40px;
+  }
+}
+
+.retro-grid-bg {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(124, 58, 237, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(124, 58, 237, 0.08) 1px, transparent 1px);
+  animation: grid-move 4s linear infinite;
+}
+
+/* CRT Scanline Overlay Effect */
+.crt-overlay::after {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.12) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  aspect-ratio: 16/9;
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.85;
+}
+
+/* Retro Pixel Corners Borders */
+.pixel-border-yellow {
+  border: 4px solid #facc15;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+}
+
+.pixel-border-purple {
+  border: 4px solid #7c3aed;
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
+}
+
+.pixel-border-cyan {
+  border: 4px solid #06b6d4;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+
+/* Shimmer/Pulse effect on pixel buttons */
+.pixel-btn-hover {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s steps(4);
+}
+
+.pixel-btn-hover:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.pixel-btn-hover:active {
+  transform: translateY(1px);
+}
+
+/* Custom twinkling stars background generator styling */
+.star {
+  position: absolute;
+  background-color: white;
+  border-radius: 50%;
+  animation: twinkle var(--duration, 3s) infinite alternate;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.1; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Custom floating animations for space rocks */
+@keyframes float-up-down-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+
+@keyframes float-up-down-medium {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-3deg); }
+}
+
+@keyframes float-up-down-fast {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(4deg); }
+}
+
+.animate-float-slow {
+  animation: float-up-down-slow 7s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-up-down-medium 5s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float-up-down-fast 3.5s ease-in-out infinite;
+}
+
+/* Slow spin for space backdrop items */
+@keyframes slow-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-slow-spin {
+  animation: slow-spin 120s linear infinite;
+}
+
+/* ─────────────────── Event Card styling from user ─────────────────── */
+
+.event-card-scene {
+  perspective: 900px;
+}
+
+.event-card {
+  position: relative;
+  background: #08081c;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.08s ease-out, box-shadow 0.3s ease;
+  will-change: transform;
+  overflow: hidden;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+}
+
+.event-card.cyan   { border: 1px solid #00e5ff; box-shadow: 0 0 10px rgba(0,229,255,0.25); }
+.event-card.orange { border: 1px solid #ff6600; box-shadow: 0 0 10px rgba(255,102,0,0.25); }
+.event-card.yellow { border: 1px solid #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.25); }
+
+.event-card.cyan:hover   { box-shadow: 0 24px 48px rgba(0,229,255,0.3), 0 0 28px rgba(0,229,255,0.5); }
+.event-card.orange:hover { box-shadow: 0 24px 48px rgba(255,102,0,0.3), 0 0 28px rgba(255,102,0,0.5); }
+.event-card.yellow:hover { box-shadow: 0 24px 48px rgba(255,215,0,0.3), 0 0 28px rgba(255,215,0,0.5); }
+
+/* ── Holographic shimmer overlay ── */
+.card-shimmer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+  z-index: 2;
+}
+.event-card:hover .card-shimmer { opacity: 1; }
+
+/* ── Corner brackets ── */
+.corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  transition: all 0.25s ease;
+  z-index: 3;
+  pointer-events: none;
+}
+.corner-tl { top:  6px; left:  6px; border-top:  2px solid; border-left:  2px solid; }
+.corner-tr { top:  6px; right: 6px; border-top:  2px solid; border-right: 2px solid; }
+.corner-bl { bottom: 6px; left:  6px; border-bottom: 2px solid; border-left:  2px solid; }
+.corner-br { bottom: 6px; right: 6px; border-bottom: 2px solid; border-right: 2px solid; }
+
+.event-card:hover .corner-tl { top:  3px; left:  3px; width: 20px; height: 20px; }
+.event-card:hover .corner-tr { top:  3px; right: 3px; width: 20px; height: 20px; }
+.event-card:hover .corner-bl { bottom: 3px; left:  3px; width: 20px; height: 20px; }
+.event-card:hover .corner-br { bottom: 3px; right: 3px; width: 20px; height: 20px; }
+
+/* ── Scan sweep line ── */
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+}
+.event-card:hover .scan-line { animation: scanSweep 0.6s ease-in forwards; }
+@keyframes scanSweep {
+  0%   { top: -2px;  opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { top: 100%;  opacity: 0; }
+}
+
+/* ── Glitch title ── */
+.card-title { position: relative; }
+.card-title.glitch::before,
+.card-title.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  color: inherit;
+}
+.card-title.glitch::before {
+  animation: glitchTop 0.35s steps(1) forwards;
+  color: #00e5ff;
+  clip-path: inset(0 0 65% 0);
+}
+.card-title.glitch::after {
+  animation: glitchBot 0.35s steps(1) forwards;
+  color: #ff6600;
+  clip-path: inset(65% 0 0 0);
+}
+@keyframes glitchTop {
+  0%  { transform: translate(-3px, -1px) skewX(-8deg); opacity: 1; }
+  30% { transform: translate( 3px, 0px) skewX( 5deg); opacity: 1; }
+  60% { transform: translate(-2px,  1px) skewX(-3deg); opacity: 0.8; }
+  100%{ transform: translate(0, 0) skewX(0); opacity: 0; }
+}
+@keyframes glitchBot {
+  0%  { transform: translate( 3px, 1px) skewX( 8deg); opacity: 1; }
+  40% { transform: translate(-3px, 0px) skewX(-5deg); opacity: 1; }
+  70% { transform: translate( 2px,-1px) skewX( 3deg); opacity: 0.8; }
+  100%{ transform: translate(0, 0) skewX(0); opacity: 0; }
+}
+
+/* ── Launch mission text hover ── */
+.launch-text {
+  color: #555577;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  transition: color 0.2s, letter-spacing 0.3s;
+}
+.event-card:hover .launch-text {
+  letter-spacing: 0.15em;
+  color: #8888aa;
+}
+
+/* ── Launch arrow button ── */
+.arrow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.event-card:hover .arrow-btn {
+  transform: scale(1.15);
+}
+
+/* ── Category tag ── */
+.cat-tag {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 7px;
+  padding: 3px 7px;
+  border: 1px solid;
+  letter-spacing: 0.05em;
+}
