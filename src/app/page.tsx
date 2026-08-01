@@ -1,17 +1,34 @@
-import { CosmicTornado3D } from "@/components/CosmicTornado3D";
+"use client";
+
+import { useEffect, useState } from "react";
+import App from "@/App";
+import { BootSequence } from "@/components/BootSequence";
 
 export default function Page() {
-  return (
-    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8">
-      <div className="max-w-4xl w-full text-center mb-8">
-        <h1 className="text-4xl font-extrabold tracking-wider bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-2">
-          ELICIT '26 ARCHIVE
-        </h1>
-        <p className="text-gray-400 text-sm">Immersive 3D Memory Vortex</p>
-      </div>
+  const [mounted, setMounted] = useState(false);
+  const [booted, setBooted] = useState(false);
 
-      {/* The 3D WebGL Canvas Component */}
-      <CosmicTornado3D />
-    </main>
-  );
+  // Handle Next.js client-side hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 1. Initial server/client hydration state
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#070114] flex items-center justify-center">
+        <div className="text-purple-400 font-mono text-sm animate-pulse">
+          LOADING SYSTEMS...
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Play the deep space CRT boot sequence
+  if (!booted) {
+    return <BootSequence onComplete={() => setBooted(true)} />;
+  }
+
+  // 3. Render your complete original app with the tornado background active
+  return <App />;
 }

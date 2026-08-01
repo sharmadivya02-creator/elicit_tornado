@@ -493,3 +493,8 @@ html, body {
   background-size: 400% 400%;
   animation: auroraSweep 10s ease infinite;
 }
+
+/* Cinematic display font for dramatic headline moments (ELICIT '26 intro sequence) */
+.font-display {
+  font-family: var(--font-display), sans-serif;
+}
