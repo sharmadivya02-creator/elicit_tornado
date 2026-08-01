@@ -147,7 +147,7 @@ const AcmLogoStage: React.FC<{ visible: boolean }> = ({ visible }) => (
     }`}
   >
     <img
-      src="/logo/acm-logo.svg"
+      src="/logo/acm-logo.webp"
       alt="ACM Logo"
       className="w-36 h-36 md:w-52 md:h-52 object-contain drop-shadow-[0_0_35px_rgba(34,211,238,0.55)]"
       style={{ animation: visible ? "acmPulse 3s ease-in-out infinite" : "none" }}
