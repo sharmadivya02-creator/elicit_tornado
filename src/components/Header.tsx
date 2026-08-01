@@ -27,7 +27,6 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'team', label: 'TEAM' },
     { id: 'contact', label: 'CONTACT' },
     { id: 'sponsors', label: 'SPONSORS' },
-    { id: 'gallery', label: 'GALLERY' },
     { id: 'dev-team', label: 'DEV TEAM' },
   ];
 

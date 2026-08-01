@@ -10,7 +10,6 @@ import { HomeView } from './components/HomeView';
 import { GlobalCosmicBackground } from './components/GlobalCosmicBackground';
 import { AboutView } from './components/AboutView';
 import { EventsView } from './components/EventsView';
-import { GalleryView } from './components/GalleryView';
 import { SponsorsView } from './components/SponsorsView';
 import { ContactView } from './components/ContactView';
 import { ProfileView } from './components/ProfileView';
@@ -640,17 +639,6 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'gallery' && (
-            <GalleryView 
-              state={state} 
-              addCoins={addCoins} 
-              addXp={addXp} 
-              completeMission={completeMission} 
-              triggerToast={triggerToast}
-              updateState={updateState}
-            />
-          )}
-
           {activeTab === 'sponsors' && (
             <SponsorsView 
               state={state} 
@@ -728,4 +716,4 @@ export default function App() {
 
     </div>
   );
-}
+}2
