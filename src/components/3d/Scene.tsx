@@ -3,10 +3,11 @@
 import { Canvas } from '@react-three/fiber';
 import { Environment, Preload } from '@react-three/drei';
 import { Suspense } from 'react';
-import { EffectComposer, Bloom, Noise } from '@react-three/postprocessing';
 import Portal from './Portal';
 import PortfolioCards from './PortfolioCards';
-import { CameraRig } from './cameraRig';
+import { CameraRig } from './CameraRig';
+import PostProcessing from './PostProcessing';
+import Overlay from '../dom/Overlay';
 
 export default function Scene() {
   return (
@@ -32,19 +33,13 @@ export default function Scene() {
             <Portal />
             <PortfolioCards />
 
-            <EffectComposer multisampling={0}>
-              <Bloom 
-                luminanceThreshold={1.2}
-                mipmapBlur 
-                intensity={2.0} 
-                levels={8}
-              />
-              <Noise opacity={0.04} />
-            </EffectComposer>
+            <PostProcessing />
 
             <Preload all />
           </Suspense>
         </Canvas>
+
+        <Overlay />
       </div>
     </div>
   );

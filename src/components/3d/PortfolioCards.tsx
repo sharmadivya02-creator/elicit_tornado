@@ -32,6 +32,8 @@ const IMAGES = [
   '/about/untitled-23.jpg',
 ];
 
+export const CARD_COUNT = IMAGES.length;
+
 // Create a default placeholder texture while loading or on error
 function createFallbackTexture() {
   const canvas = document.createElement('canvas');
@@ -89,7 +91,7 @@ function SingleCard({ index, imgUrl }: { index: number; imgUrl: string }) {
     const scrollProgress = useStore.getState().scrollProgress;
 
     if (meshRef.current) {
-      meshRef.current.position.z = initialZ + scrollProgress * (IMAGES.length * 4.5);
+      meshRef.current.position.z = initialZ + scrollProgress * (CARD_COUNT * 4.5);
     }
   });
 

@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { useStore } from '@/store/useStore';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { CARD_COUNT } from './PortfolioCards';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -35,8 +36,8 @@ export function CameraRig() {
   useFrame((state) => {
     const progress = useStore.getState().scrollProgress;
 
-    // Travel deep down the Z-axis based on scroll progress (matching your 21 cards)
-    const totalTunnelDepth = 21 * 4.5; 
+    // Travel deep down the Z-axis based on scroll progress (matches actual card count)
+    const totalTunnelDepth = CARD_COUNT * 4.5;
     state.camera.position.z = 8 - progress * totalTunnelDepth;
     
     // Subtle organic camera sway

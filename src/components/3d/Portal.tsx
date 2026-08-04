@@ -22,7 +22,7 @@ export default function Portal() {
   });
 
   return (
-    <mesh position={[0, 0, 0]}>
+    <points position={[0, 0, 0]}>
       <sphereGeometry args={[2.5, 64, 64]} />
       <shaderMaterial
         ref={materialRef}
@@ -33,8 +33,9 @@ export default function Portal() {
           uProgress: { value: 0 },
         }}
         transparent={true}
-        side={THREE.DoubleSide}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
       />
-    </mesh>
+    </points>
   );
 }

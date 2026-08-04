@@ -29,10 +29,10 @@ export const AboutView: React.FC<AboutProps> = ({ state, addXp, completeMission,
     <div className="w-full relative px-6 py-8 md:py-12 select-none animate-[fadeIn_0.5s_ease-out]">
       <div className="max-w-7xl mx-auto flex flex-col gap-12">
         
-        {/* ================= ELICIT '26 WEBGL SEQUENCE ================= */}
-        <div className="w-full min-h-[600px] flex items-center justify-center mt-12 mb-20">
-          <CosmicTornado3D />
-        </div>
+       {/* ================= ELICIT '26 WEBGL SEQUENCE ================= */}
+<div className="w-full mt-12 mb-20">
+  <CosmicTornado3D />
+</div>
 
         {/* ================= STATS SECTION ================= */}
         <div className="w-full px-4 sm:px-10 mt-2 flex flex-col items-center justify-center text-center">
