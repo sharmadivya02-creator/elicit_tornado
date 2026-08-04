@@ -19,12 +19,20 @@ void main() {
     if (alpha <= 0.0) discard;
     
     vec4 texColor = texture2D(uTexture, vUv);
-    float borderGlow = 1.0 - smoothstep(-8.0, 0.0, dist);
-    vec3 neonPink = vec3(1.0, 0.08, 0.58); 
+
+    // Inside main() in shaders/card/fragment.tsx
+
+// Change this section:
+// float borderGlow = smoothstep(-8.0, 0.0, dist);
+// vec3 neonPink = vec3(1.0, 0.08, 0.58);
+// vec3 finalColor = mix(texColor.rgb, neonPink, borderGlow * 0.35);
+
+// To this cleaner, glassy look:
+float borderGlow = smoothstep(-8.0, 0.0, dist);
+vec3 subtleWhite = vec3(0.9, 0.9, 0.95);
+vec3 finalColor = mix(texColor.rgb, subtleWhite, borderGlow * 0.15);
+
     
-    vec3 finalColor = mix(texColor.rgb * 0.85, neonPink, borderGlow * 0.6);
-    float finalAlpha = max(0.15, borderGlow);
-    
-    gl_FragColor = vec4(finalColor, finalAlpha * alpha);
+    gl_FragColor = vec4(finalColor, alpha);
 }
 `;

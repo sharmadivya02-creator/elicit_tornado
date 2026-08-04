@@ -1,51 +1,34 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { useStore } from '@/store/useStore';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { CARD_COUNT } from './PortfolioCards';
-
-gsap.registerPlugin(ScrollTrigger);
+import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import { useMemo } from 'react';
+import { useStore } from '../../store/useStore';
 
 export function CameraRig() {
-  const setScrollProgress = useStore((state) => state.setScrollProgress);
+  const { camera } = useThree();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 100);
+  // Create a sweeping CatmullRom curve for the camera to fly through
+  const curve = useMemo(() => new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 0, 8),      // Start position (viewing portal)
+    new THREE.Vector3(3, 1, 0),      // Curve right and up
+    new THREE.Vector3(-3, -1, -15),  // Curve left and down through the cards
+    new THREE.Vector3(0, 0, -30)     // End deep in the scene
+  ]), []);
 
-    const st = ScrollTrigger.create({
-      trigger: '#scroll-container',
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: 1.5, // Smooth lag effect on scroll
-      onUpdate: (self) => {
-        setScrollProgress(self.progress);
-      },
-    });
-
-    return () => {
-      clearTimeout(timer);
-      st.kill();
-    };
-  }, [setScrollProgress]);
-
-  useFrame((state) => {
-    const progress = useStore.getState().scrollProgress;
-
-    // Travel deep down the Z-axis based on scroll progress (matches actual card count)
-    const totalTunnelDepth = CARD_COUNT * 4.5;
-    state.camera.position.z = 8 - progress * totalTunnelDepth;
+  useFrame(() => {
+    // Grab the 0 to 1 progress from Zustand (driven by Lenis)
+    const scrollProgress = useStore.getState().scrollProgress;
     
-    // Subtle organic camera sway
-    state.camera.position.y = Math.sin(progress * Math.PI * 4) * 0.4;
-    state.camera.position.x = Math.cos(progress * Math.PI * 2) * 0.3;
+    // Map progress to the 3D curve
+    const point = curve.getPoint(scrollProgress);
     
-    // Look ahead of the camera for cinematic depth
-    state.camera.lookAt(0, 0, state.camera.position.z - 10);
+    // Look slightly ahead on the curve for realistic cinematic movement
+    const lookAtPoint = curve.getPoint(Math.min(scrollProgress + 0.05, 1.0));
+    
+    // Smoothly interpolate the camera's position and rotation
+    camera.position.lerp(point, 0.08);
+    camera.lookAt(lookAtPoint);
   });
 
   return null;
