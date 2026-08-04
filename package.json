@@ -14,8 +14,6 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.7.0",
     "@react-three/postprocessing": "^3.0.4",
-    "@studio-freight/lenis": "^1.0.42",
-    "@studio-freight/react-lenis": "^0.0.47",
     "gsap": "^3.15.0",
     "lucide-react": "^1.24.0",
     "motion": "^12.42.2",
@@ -32,7 +30,15 @@
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.185.3",
     "autoprefixer": "^10.5.2",
+    "raw-loader": "^4.0.2",
     "tailwindcss": "^4.3.2",
     "typescript": "^5.8.2"
   }
+,
+"overrides": {
+  "@studio-freight/react-lenis": {
+    "@types/react": "19.2.17"
+  }
+
+}
 }
