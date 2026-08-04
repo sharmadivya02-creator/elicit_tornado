@@ -1,131 +1,263 @@
 "use client";
-
 import React, { useMemo, useRef, useEffect, useState, Suspense } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Image as DreiImage, useProgress } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Image as DreiImage, Text, useProgress } from "@react-three/drei";
 import * as THREE from "three";
 
 /* ============================================================
-   PHASE TYPE
+   DATA: MULTI-PROJECT SHOWCASE
    ============================================================ */
-type Phase = "logo-in" | "headline" | "spiral" | "logo-out";
+const SHOWCASE_ITEMS = [
+  { id: 'echo', title: 'ECHO', subtitle: 'COSMIC HACK 2.0', color: '#00e5ff', img: '/about/DSC_0074.jpg' },
+  { id: 'mission', title: 'MISSION', subtitle: 'ROBOTICS ARENA', color: '#ff007f', img: '/about/DSC01089.jpg' },
+  { id: 'harmonic', title: 'HARMONIC STATE', subtitle: 'AI ODYSSEY', color: '#a855f7', img: '/about/DSC01093.jpg' },
+  { id: 'lab', title: 'THE LAB', subtitle: 'DESIGN SPRINT', color: '#facc15', img: '/about/DSC01123.jpg' },
+];
 
 /* ============================================================
-   3D PIECES (unchanged from before — particle field + photo ring)
+   3D COMPONENT: COLOR-BLAST SMOKE BURST
    ============================================================ */
-const ParticleVortex = () => {
-  const pointsRef = useRef<THREE.Points>(null);
-  const particleCount = 5000;
+const SmokeBurst = ({ triggerIndex }: { triggerIndex: number }) => {
+  const count = 2500;
+  const meshRef = useRef<THREE.Points>(null);
+  const posRef = useRef(new Float32Array(count * 3));
+  const velRef = useRef(new Float32Array(count * 3));
+  const lifeRef = useRef(new Float32Array(count));
 
-  const positions = useMemo(() => {
+  // Generate the particle geometry and colors once
+  const geo = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(posRef.current, 3));
+
+    const colors = new Float32Array(count * 3);
+    const palette = [new THREE.Color('#00e5ff'), new THREE.Color('#ff007f'), new THREE.Color('#a855f7')];
+    
+    for (let i = 0; i < count; i++) {
+      const c = palette[Math.floor(Math.random() * palette.length)];
+      colors[i * 3] = c.r; 
+      colors[i * 3 + 1] = c.g; 
+      colors[i * 3 + 2] = c.b;
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    return g;
+  }, []);
+
+  // Generate a soft, smoky puff texture programmatically
+  const smokeTexture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      grad.addColorStop(0.4, 'rgba(255, 255, 255, 0.6)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+    }
+    return new THREE.CanvasTexture(canvas);
+  }, []);
+
+  // Fire the burst whenever the index changes
+  useEffect(() => {
+    for (let i = 0; i < count; i++) {
+      // Start in a tight cluster at the center
+      posRef.current[i * 3] = (Math.random() - 0.5) * 0.5;
+      posRef.current[i * 3 + 1] = (Math.random() - 0.5) * 0.5;
+      posRef.current[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
+
+      // Spherical explosion velocity
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos((Math.random() * 2) - 1);
+      const speed = Math.random() * 20 + 8;
+      velRef.current[i * 3] = Math.sin(phi) * Math.cos(theta) * speed;
+      velRef.current[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * speed;
+      velRef.current[i * 3 + 2] = Math.cos(phi) * speed;
+
+      lifeRef.current[i] = 1.0; // Reset life
+    }
+    if (meshRef.current) {
+      meshRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  }, [triggerIndex]);
+
+  useFrame((_, delta) => {
+    if (!meshRef.current) return;
+    let needsUpdate = false;
+    const positions = posRef.current;
+    const velocities = velRef.current;
+    const life = lifeRef.current;
+
+    for (let i = 0; i < count; i++) {
+      if (life[i] > 0) {
+        life[i] -= delta * 1.5; // Controls how fast the smoke clears
+        
+        positions[i * 3] += velocities[i * 3] * delta;
+        positions[i * 3 + 1] += velocities[i * 3 + 1] * delta;
+        positions[i * 3 + 2] += velocities[i * 3 + 2] * delta;
+        
+        // High drag creates the billowing smoke effect
+        velocities[i * 3] *= 0.82;
+        velocities[i * 3 + 1] *= 0.82;
+        velocities[i * 3 + 2] *= 0.82;
+        
+        needsUpdate = true;
+      } else if (life[i] > -1) {
+        // Move off-camera once dead
+        positions[i * 3] = 9999;
+        life[i] = -2;
+        needsUpdate = true;
+      }
+    }
+
+    if (needsUpdate) {
+      meshRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  });
+
+  return (
+    <points ref={meshRef} geometry={geo}>
+      <pointsMaterial
+        size={1.2}
+        map={smokeTexture}
+        vertexColors
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
+  );
+};
+
+/* ============================================================
+   3D COMPONENT: PARALLAX SHOWCASE CARD
+   ============================================================ */
+const ShowcaseCard = ({ item, isActive }: { item: any; isActive: boolean }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const { pointer } = useThree();
+
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+    
+    // 1. 3D Parallax Tilt based on cursor
+    const targetX = (pointer.y * Math.PI) / 12;
+    const targetY = (pointer.x * Math.PI) / 12;
+    groupRef.current.rotation.x += (targetX - groupRef.current.rotation.x) * delta * 6;
+    groupRef.current.rotation.y += (targetY - groupRef.current.rotation.y) * delta * 6;
+
+    // 2. Scale & reveal logic (pops out of the smoke)
+    const targetScale = isActive ? 1 : 0.01;
+    groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 7);
+
+    // Render optimization
+    groupRef.current.visible = groupRef.current.scale.x > 0.05;
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Photo Layer */}
+      <DreiImage
+        url={item.img}
+        transparent
+        opacity={0.9}
+        position={[0, 0, -0.2]}
+        scale={[6, 3.5]} // Widescreen aspect ratio
+      />
+      
+      {/* Darkening overlay to make text pop */}
+      <mesh position={[0, 0, -0.19]}>
+        <planeGeometry args={[6, 3.5]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.4} />
+      </mesh>
+
+      {/* Floating 3D Text Layers */}
+      <Text
+        position={[0, 0.3, 0.4]}
+        fontSize={0.85}
+        color={item.color}
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#000000"
+        letterSpacing={0.05}
+      >
+        {item.title}
+      </Text>
+      
+      <Text
+        position={[0, -0.6, 0.6]}
+        fontSize={0.25}
+        color="#ffffff"
+        anchorX="center"
+        anchorY="middle"
+        letterSpacing={0.3}
+        outlineWidth={0.01}
+        outlineColor="#000000"
+      >
+        {item.subtitle}
+      </Text>
+    </group>
+  );
+};
+
+/* ============================================================
+   3D COMPONENT: AMBIENT SWIRLING PARTICLES
+   ============================================================ */
+const AmbientVortex = () => {
+  const pointsRef = useRef<THREE.Points>(null);
+  const particleCount = 1500;
+
+  const { positions, colors } = useMemo(() => {
     const pos = new Float32Array(particleCount * 3);
+    const col = new Float32Array(particleCount * 3);
+    const palette = [new THREE.Color('#00e5ff'), new THREE.Color('#ff007f'), new THREE.Color('#a855f7')];
+
     for (let i = 0; i < particleCount; i++) {
-      const radius = Math.random() * 4;
+      const radius = Math.random() * 10 + 2;
       const theta = Math.random() * 2 * Math.PI;
-      const y = (Math.random() - 0.5) * 10;
+      const y = (Math.random() - 0.5) * 12;
       const twist = y * 0.5;
 
       pos[i * 3] = radius * Math.cos(theta + twist);
       pos[i * 3 + 1] = y;
-      pos[i * 3 + 2] = radius * Math.sin(theta + twist);
+      pos[i * 3 + 2] = radius * Math.sin(theta + twist) - 4; // Push behind cards
+
+      const c = palette[Math.floor(Math.random() * palette.length)];
+      col[i * 3] = c.r; 
+      col[i * 3 + 1] = c.g; 
+      col[i * 3 + 2] = c.b;
     }
-    return pos;
-  }, [particleCount]);
+    return { positions: pos, colors: col };
+  }, []);
 
   useFrame((_, delta) => {
     if (pointsRef.current) {
-      pointsRef.current.rotation.y += delta * 0.2;
+      pointsRef.current.rotation.y += delta * 0.1;
     }
   });
 
   return (
     <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={particleCount}
-          array={positions}
-          itemSize={3}
-        />
+        <bufferAttribute attach="attributes-position" count={particleCount} array={positions} itemSize={3} />
+        <bufferAttribute attach="attributes-color" count={particleCount} array={colors} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial
-        size={0.03}
-        color="#22d3ee"
-        transparent
-        opacity={0.6}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
+      <pointsMaterial size={0.05} vertexColors transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} />
     </points>
   );
 };
 
-const ABOUT_IMAGES = [
-  "/about/DSC_0074.jpg",
-  "/about/DSC01089.jpg",
-  "/about/DSC01093.jpg",
-  "/about/DSC01123.jpg",
-  "/about/DSC03579-2.jpg",
-  "/about/DSC05277-Enhanced-NR.jpg",
-  "/about/DSC05360-Enhanced-NR.jpg",
-  "/about/DSC09563.jpg",
-  "/about/DSC09810.jpg",
-  "/about/DSC09946.jpg",
-  "/about/IMG_0013.jpg",
-  "/about/IMG_0465.jpg",
-  "/about/IMG_0651.jpg",
-  "/about/IMG_3281.jpg",
-  "/about/IMG_8134.jpg",
-  "/about/IMG_8199.jpg",
-  "/about/IMG_8215.jpg",
-  "/about/untitled-4.jpg",
-  "/about/untitled-18 (1).jpg",
-  "/about/untitled-23.jpg",
-];
-
-const FloatingImages = () => {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((_, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y -= delta * 0.15;
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      {ABOUT_IMAGES.map((url, i) => {
-        const angle = (i / ABOUT_IMAGES.length) * Math.PI * 2 * 2;
-        const radius = 6.0;
-
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-        const y = (i - ABOUT_IMAGES.length / 2) * 0.5;
-
-        return (
-          <DreiImage
-            key={i}
-            url={url}
-            position={[x, y, z]}
-            rotation={[0, -angle + Math.PI / 2, 0]}
-            scale={[2.2, 1.4]}
-            transparent
-            opacity={0.9}
-          />
-        );
-      })}
-    </group>
-  );
-};
-
+/* ============================================================
+   UI COMPONENT: LOADING OVERLAY
+   ============================================================ */
 const LoadingOverlay = () => {
   const { active, progress } = useProgress();
   if (!active) return null;
-
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 pointer-events-none">
-      <div className="text-cyan-400 font-mono text-sm tracking-widest mb-3">
-        LOADING MEMORY VORTEX... {Math.round(progress)}%
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90 pointer-events-none">
+      <div className="text-cyan-400 font-mono text-sm tracking-widest mb-3 animate-pulse">
+        RENDERING GALAXY... {Math.round(progress)}%
       </div>
       <div className="w-48 h-1.5 bg-cyan-950 rounded-full overflow-hidden border border-cyan-500/30">
         <div
@@ -138,131 +270,55 @@ const LoadingOverlay = () => {
 };
 
 /* ============================================================
-   STAGE: ACM LOGO (opening + closing)
-   ============================================================ */
-const AcmLogoStage: React.FC<{ visible: boolean }> = ({ visible }) => (
-  <div
-    className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-[1200ms] ease-out ${
-      visible ? "opacity-100" : "opacity-0 pointer-events-none"
-    }`}
-  >
-    <img
-      src="/logo/acm-logo.webp"
-      alt="ACM Logo"
-      className="w-36 h-36 md:w-52 md:h-52 object-contain drop-shadow-[0_0_35px_rgba(34,211,238,0.55)]"
-      style={{ animation: visible ? "acmPulse 3s ease-in-out infinite" : "none" }}
-    />
-    <style jsx>{`
-      @keyframes acmPulse {
-        0%, 100% { transform: scale(1); filter: brightness(1); }
-        50% { transform: scale(1.05); filter: brightness(1.25); }
-      }
-    `}</style>
-  </div>
-);
-
-/* ============================================================
-   STAGE: HEADLINE (ELICIT '26 + Powered by OnePlus)
-   ============================================================ */
-const HeadlineStage: React.FC<{ visible: boolean }> = ({ visible }) => (
-  <div
-    className={`absolute inset-0 flex flex-col items-center justify-center text-center px-6 transition-opacity duration-[1200ms] ease-out ${
-      visible ? "opacity-100" : "opacity-0 pointer-events-none"
-    }`}
-  >
-    <h2 className="font-display text-4xl md:text-6xl font-black tracking-[0.15em] bg-gradient-to-r from-cyan-300 via-white to-purple-400 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(124,58,237,0.5)]">
-      ELICIT&nbsp;'26
-    </h2>
-    <p className="mt-4 font-mono text-[10px] md:text-xs tracking-[0.4em] text-cyan-300/80 uppercase">
-      Powered by OnePlus
-    </p>
-  </div>
-);
-
-/* ============================================================
-   STAGE: DESCRIPTION OVERLAY (shown while spiral is active)
-   ============================================================ */
-const DescriptionStage: React.FC<{ visible: boolean }> = ({ visible }) => (
-  <div
-    className={`absolute bottom-6 left-0 right-0 flex justify-center px-6 transition-opacity duration-[1200ms] ease-out ${
-      visible ? "opacity-100" : "opacity-0 pointer-events-none"
-    }`}
-  >
-    <p className="max-w-xl text-center font-mono text-[11px] md:text-sm leading-relaxed text-gray-300/90 tracking-wide bg-black/40 backdrop-blur-sm rounded-lg px-4 py-3 border border-cyan-500/10">
-      ELICIT '26 is MUJ ACM Student Chapter's flagship tech fest — a gathering
-      of builders, dreamers and explorers pushing the edges of code, design
-      and imagination across a galaxy of ideas.
-    </p>
-  </div>
-);
-
-/* ============================================================
    MAIN SEQUENCE ORCHESTRATOR
    ============================================================ */
 export const CosmicTornado3D = () => {
-  const [mounted, setMounted] = useState(false);
-  const [phase, setPhase] = useState<Phase>("logo-in");
-  const [showDescription, setShowDescription] = useState(false);
-  const [showCanvas, setShowCanvas] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
+  // Auto-advance the portfolio carousel every 5.5 seconds
   useEffect(() => {
-    setMounted(true);
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % SHOWCASE_ITEMS.length);
+    }, 5500);
+    return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
-    // Timeline (ms) — tweak these to change pacing
-    const timers: ReturnType<typeof setTimeout>[] = [
-      setTimeout(() => setPhase("headline"), 3200),   // logo holds ~3.2s
-      setTimeout(() => {
-        setPhase("spiral");
-        setShowCanvas(true);
-      }, 6800),                                        // headline holds ~3.6s
-      setTimeout(() => setShowDescription(true), 9000),  // description fades in
-      setTimeout(() => setShowDescription(false), 16000), // description fades out
-      setTimeout(() => setPhase("logo-out"), 17000),   // spiral fades, closing logo fades in
-    ];
-
-    return () => timers.forEach(clearTimeout);
-  }, [mounted]);
-
-  if (!mounted) {
-    return (
-      <div className="w-full h-[600px] bg-black/90 rounded-xl flex items-center justify-center text-cyan-400 font-mono text-sm tracking-widest">
-        INITIALIZING NEURAL WEBGL ENGINE...
-      </div>
-    );
-  }
 
   return (
     <div className="w-full h-[600px] relative border border-cyan-500/30 rounded-xl overflow-hidden shadow-[0_0_40px_rgba(34,211,238,0.15)] bg-black">
-      {showCanvas && (
-        <div
-          className={`absolute inset-0 transition-opacity duration-[1500ms] ease-out ${
-            phase === "spiral" ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <Canvas camera={{ position: [0, 2, 11], fov: 60 }}>
-            <Suspense fallback={null}>
-              <ambientLight intensity={0.8} />
-              <ParticleVortex />
-              <FloatingImages />
-              <OrbitControls
-                enableZoom={false}
-                autoRotate={false}
-                maxPolarAngle={Math.PI / 1.5}
-                minPolarAngle={Math.PI / 3}
-              />
-            </Suspense>
-          </Canvas>
-          <LoadingOverlay />
-        </div>
-      )}
+      
+      {/* 3D Canvas Context */}
+      <Canvas camera={{ position: [0, 0, 4.5], fov: 50 }}>
+        <Suspense fallback={null}>
+          <ambientLight intensity={0.8} />
+          
+          <AmbientVortex />
+          <SmokeBurst triggerIndex={activeIndex} />
+          
+          {SHOWCASE_ITEMS.map((item, index) => (
+            <ShowcaseCard key={item.id} item={item} isActive={index === activeIndex} />
+          ))}
+        </Suspense>
+      </Canvas>
 
-      <AcmLogoStage visible={phase === "logo-in" || phase === "logo-out"} />
-      <HeadlineStage visible={phase === "headline"} />
-      <DescriptionStage visible={showDescription} />
+      <LoadingOverlay />
+
+      {/* UI Overlay: Manual Navigation Track */}
+      <div className="absolute bottom-8 left-0 right-0 flex justify-center z-10">
+        <div className="flex gap-3 bg-black/40 backdrop-blur-md px-4 py-3 rounded-full border border-purple-500/20">
+          {SHOWCASE_ITEMS.map((item, idx) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveIndex(idx)}
+              className={`transition-all duration-300 rounded-full cursor-pointer hover:scale-110 ${
+                idx === activeIndex 
+                  ? 'w-10 h-2 bg-cyan-400 shadow-[0_0_10px_rgba(0,229,255,0.8)]' 
+                  : 'w-2 h-2 bg-purple-700/60 hover:bg-purple-400'
+              }`}
+              aria-label={`Jump to ${item.title}`}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

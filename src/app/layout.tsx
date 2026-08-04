@@ -20,8 +20,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={orbitron.variable}>
-      <body className="antialiased">{children}</body>
+    <html lang="en" className={`${orbitron.variable} min-h-screen`}>
+      <body className="antialiased min-h-screen bg-black text-white overflow-x-hidden">
+        {children}
+      </body>
     </html>
   );
 }

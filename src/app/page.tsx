@@ -1,34 +1,48 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import App from "@/App";
-import { BootSequence } from "@/components/BootSequence";
+import { Canvas } from '@react-three/fiber';
+import { Environment, Preload } from '@react-three/drei';
+import { Suspense } from 'react';
+import { EffectComposer, Bloom, Noise } from '@react-three/postprocessing';
+import Portal from '@/components/3d/Portal';
+import PortfolioCards from '@/components/3d/PortfolioCards';
 
 export default function Page() {
-  const [mounted, setMounted] = useState(false);
-  const [booted, setBooted] = useState(false);
+  return (
+    <main className="w-full h-screen bg-black overflow-hidden">
+      <Canvas
+        camera={{ position: [0, 0, 8], fov: 45 }}
+        dpr={[1, 2]}
+        gl={{ antialias: false, powerPreference: 'high-performance', alpha: false }}
+      >
+        {/* Base Void Background */}
+        <color attach="background" args={['#000000']} />
+        
+        <Suspense fallback={null}>
+          {/* Environment & Lighting */}
+          <Environment preset="city" />
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[5, 10, 5]} intensity={1.5} color="#8A2BE2" />
+          <directionalLight position={[-5, -5, -5]} intensity={1} color="#00FFFF" />
 
-  // Handle Next.js client-side hydration
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+          {/* Active 3D Components */}
+          <Portal />
+          <PortfolioCards />
 
-  // 1. Initial server/client hydration state
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-[#070114] flex items-center justify-center">
-        <div className="text-purple-400 font-mono text-sm animate-pulse">
-          LOADING SYSTEMS...
-        </div>
-      </div>
-    );
-  }
+          {/* Post-Processing Pipeline */}
+          <EffectComposer multisampling={0}>
+            <Bloom 
+              luminanceThreshold={1.2}
+              mipmapBlur 
+              intensity={2.0} 
+              levels={8}
+            />
+            <Noise opacity={0.04} />
+          </EffectComposer>
 
-  // 2. Play the deep space CRT boot sequence
-  if (!booted) {
-    return <BootSequence onComplete={() => setBooted(true)} />;
-  }
-
-  // 3. Render your complete original app with the tornado background active
-  return <App />;
+          <Preload all />
+        </Suspense>
+      </Canvas>
+    </main>
+  );
 }
