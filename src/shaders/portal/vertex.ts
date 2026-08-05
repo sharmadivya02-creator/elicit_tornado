@@ -1,30 +1,28 @@
 export const vertexShader = `
 uniform float uTime;
-uniform float uProgress;
+attribute float aSeed;
 
-varying vec2 vUv;
-varying vec3 vPosition;
+varying float vSeed;
 
 void main() {
-    vUv = uv;
-    vPosition = position;
-    
-    vec3 pos = position;
-    vec3 norm = normal;
-    
-    float noise = sin(pos.x * 10.0 + uTime * 2.0) * cos(pos.y * 10.0 + uTime * 2.0);
-    float displacement = uProgress * (4.0 + noise * 2.0);
-    pos += norm * displacement;
-    
-    float angle = uProgress * 2.0 * pos.z;
+    vSeed = aSeed;
+
+vec3 pos = position;
+
+    float spinSpeed = 0.15 + aSeed * 0.1;
+    float angle = uTime * spinSpeed;
     float s = sin(angle);
     float c = cos(angle);
-    mat2 rot = mat2(c, -s, s, c);
-    pos.xy *= rot;
+    float rx = pos.x * c - pos.z * s;
+    float rz = pos.x * s + pos.z * c;
+    pos.x = rx;
+    pos.z = rz;
+
+    pos.y += sin(uTime * 0.6 + aSeed * 20.0) * 0.15;
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-    
-    gl_PointSize = (4.0 * (1.0 - (uProgress * 0.5))) * (10.0 / -mvPosition.z);
+
+    gl_PointSize = (1.6 + aSeed * 1.4) * (60.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
 }
 `;

@@ -33,6 +33,8 @@ const IMAGES = [
 ];
 
 export const CARD_COUNT = IMAGES.length;
+export const DEPTH_SPACING = 5.5;
+export const TUNNEL_DEPTH = CARD_COUNT * DEPTH_SPACING;
 
 // Create a default placeholder texture while loading or on error
 function createFallbackTexture() {
@@ -92,25 +94,15 @@ function SingleCard({ index, imgUrl }: { index: number; imgUrl: string }) {
   const pixelMultiplier = 150;
 
   // 3. Beautiful 3D Curved Tunnel Arrangement
-  const depthSpacing = 5.5; // Distance between each card
-  const initialZ = -index * depthSpacing;
-  
-  // Create an elegant sweeping S-curve left/right and up/down
-  const initialX = Math.sin(index * 0.7) * 4.5; 
-  const initialY = Math.cos(index * 0.4) * 1.5; 
-  
-  // Slightly tilt the cards inward towards the center of the screen
-  const rotY = initialX * 0.08;
-  const rotZ = Math.sin(index) * 0.05;
+// Centered directly on the camera's path — no left/right/up/down scatter
+  const initialZ = -index * DEPTH_SPACING;
+  const initialX = 0;
+  const initialY = 0;
 
-  useFrame(() => {
-    const scrollProgress = useStore.getState().scrollProgress;
+  const rotY = 0;
+  const rotZ = 0;
 
-    if (meshRef.current) {
-      // Fly the cards smoothly past the camera as you scroll
-      meshRef.current.position.z = initialZ + scrollProgress * (CARD_COUNT * depthSpacing);
-    }
-  });
+ 
 
   return (
     <mesh ref={meshRef} position={[initialX, initialY, initialZ]} rotation={[0, rotY, rotZ]}>

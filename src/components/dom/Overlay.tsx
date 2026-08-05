@@ -2,6 +2,7 @@
 
 import Hero from './Hero';
 import Loader from './Loader';
+import EndingFade from './EndingFade';
 
 export default function Overlay() {
   return (
@@ -23,3 +24,5 @@ export default function Overlay() {
     </div>
   );
 }
+
+

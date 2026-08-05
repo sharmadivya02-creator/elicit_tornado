@@ -1,41 +1,25 @@
-'use client';
+const { positions, seeds } = useMemo(() => {
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const seeds = new Float32Array(PARTICLE_COUNT);
 
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
-import { useStore } from '@/store/useStore';
-import { vertexShader } from '@/shaders/portal/vertex';
-import { fragmentShader } from '@/shaders/portal/fragment';
+    const verticalSpan = 10;
+    const helixTurns = 3.5;
 
-export default function Portal() {
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const scrollProgress = useStore((state) => state.scrollProgress);
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const baseZ = -Math.random() * TUNNEL_DEPTH;
 
-  useFrame((state) => {
-    if (materialRef.current) {
-      // Update elapsed time for ambient animation
-      materialRef.current.uniforms.uTime.value = state.clock.getElapsedTime();
-      
-      // Scale scroll progress so the portal explosion happens during the first chunk of the scroll
-      materialRef.current.uniforms.uProgress.value = Math.min(scrollProgress * 2.5, 1.0);
+      const t = Math.random();
+      const y = (t - 0.5) * verticalSpan;
+      const angle = t * helixTurns * Math.PI * 2 + Math.random() * 0.4;
+
+      const radius = 2.2 + Math.random() * 1.8;
+
+      positions[i * 3] = Math.cos(angle) * radius;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = baseZ + Math.sin(angle) * radius * 0.3;
+
+      seeds[i] = Math.random();
     }
-  });
 
-  return (
-    <points position={[0, 0, 0]}>
-      <sphereGeometry args={[2.5, 64, 64]} />
-      <shaderMaterial
-        ref={materialRef}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        uniforms={{
-          uTime: { value: 0 },
-          uProgress: { value: 0 },
-        }}
-        transparent={true}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  );
-}
+    return { positions, seeds };
+  }, []);

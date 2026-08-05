@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
 import { useStore } from '@/store/useStore';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { TUNNEL_DEPTH } from './PortfolioCards';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -34,23 +34,15 @@ export function CameraRig() {
     };
   }, [setScrollProgress]);
 
-  const curve = useMemo(
-    () =>
-      new THREE.CatmullRomCurve3([
-        new THREE.Vector3(0, 0, 8),
-        new THREE.Vector3(3, 1, 0),
-        new THREE.Vector3(-3, -1, -15),
-        new THREE.Vector3(0, 0, -30),
-      ]),
-    []
-  );
-
   useFrame(() => {
-    const scrollProgress = useStore.getState().scrollProgress;
-    const point = curve.getPoint(scrollProgress);
-    const lookAtPoint = curve.getPoint(Math.min(scrollProgress + 0.05, 1.0));
-    camera.position.lerp(point, 0.08);
-    camera.lookAt(lookAtPoint);
+    const progress = useStore.getState().scrollProgress;
+
+    const targetZ = 8 - progress * TUNNEL_DEPTH;
+    camera.position.z += (targetZ - camera.position.z) * 0.12;
+    camera.position.x += (0 - camera.position.x) * 0.12;
+    camera.position.y += (0 - camera.position.y) * 0.12;
+
+    camera.lookAt(0, 0, camera.position.z - 10);
   });
 
   return null;
