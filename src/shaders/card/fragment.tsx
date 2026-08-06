@@ -1,3 +1,4 @@
+// src/shaders/card/fragment.tsx
 export const cardFragmentShader = `
 uniform sampler2D uTexture;
 uniform vec2 uResolution; 
@@ -20,18 +21,14 @@ void main() {
     
     vec4 texColor = texture2D(uTexture, vUv);
 
-    // Inside main() in shaders/card/fragment.tsx
-
-// Change this section:
-// float borderGlow = smoothstep(-8.0, 0.0, dist);
-// vec3 neonPink = vec3(1.0, 0.08, 0.58);
-// vec3 finalColor = mix(texColor.rgb, neonPink, borderGlow * 0.35);
-
-// To this cleaner, glassy look:
-float borderGlow = smoothstep(-8.0, 0.0, dist);
-vec3 subtleWhite = vec3(0.9, 0.9, 0.95);
-vec3 finalColor = mix(texColor.rgb, subtleWhite, borderGlow * 0.15);
-
+    // Glassy, cinematic look with subtle glow
+    float borderGlow = smoothstep(-8.0, 0.0, dist);
+    vec3 subtleWhite = vec3(0.9, 0.9, 0.95);
+    vec3 finalColor = mix(texColor.rgb, subtleWhite, borderGlow * 0.15);
+    
+    // Subtle vignette effect
+    float vignette = 1.0 - length((vUv - 0.5) * 1.2);
+    finalColor *= (0.85 + 0.15 * vignette);
     
     gl_FragColor = vec4(finalColor, alpha);
 }

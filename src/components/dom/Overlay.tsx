@@ -1,3 +1,4 @@
+// src/components/dom/Overlay.tsx
 'use client';
 
 import Hero from './Hero';
@@ -24,5 +25,3 @@ export default function Overlay() {
     </div>
   );
 }
-
-
