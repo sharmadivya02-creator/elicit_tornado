@@ -165,10 +165,16 @@ function SingleCard({ index, imgUrl }: { index: number; imgUrl: string }) {
     const time = clock.getElapsedTime();
     
     // Hexagonal movement
-    const hexAngle = hexAngleOffset + time * SWIRL_SPEED + normalizedProgress * Math.PI * 2;
-    
-    const hexX = Math.sin(hexAngle) * HEX_RADIUS * (1 - Math.abs(distanceFromCenter) * 0.3);
-    const hexY = Math.cos(hexAngle * 0.6 + 0.3) * HEX_RADIUS * 0.6 * (1 - Math.abs(distanceFromCenter) * 0.3);
+const hexAngle = hexAngleOffset + time * SWIRL_SPEED + normalizedProgress * Math.PI * 2;
+
+// Amplitude grows as the image moves AWAY from center (0 at center,
+// full swing during transition), so the active image stays centered.
+const hexModulation = Math.min(1, Math.abs(distanceFromCenter) / transitionWidth);
+
+// VERTICAL hexagonal motion: full-radius sin drives Y (was X), reduced
+// cos drives X (was Y) — swings the image up/down instead of side-to-side.
+const hexY =Math.cos(hexAngle * 0.6 + 0.3) * HEX_RADIUS * 0.6 * hexModulation;
+const hexX = Math.sin(hexAngle) * HEX_RADIUS * hexModulation;
     
     const floatX = Math.sin(time * 0.3 + index * 0.5) * 0.2;
     const floatY = Math.cos(time * 0.4 + index * 0.7) * 0.2;

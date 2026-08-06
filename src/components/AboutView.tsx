@@ -151,6 +151,17 @@ export const AboutView: React.FC<AboutProps> = ({ state, addXp, completeMission,
           <div className="h-screen flex items-center justify-center">
            
           </div>
+          <div className="h-screen flex items-center justify-center">
+           
+          </div><div className="h-screen flex items-center justify-center">
+           
+          </div><div className="h-screen flex items-center justify-center">
+           
+          </div><div className="h-screen flex items-center justify-center">
+           
+          </div><div className="h-screen flex items-center justify-center">
+           
+          </div>
 
 
         </div>
