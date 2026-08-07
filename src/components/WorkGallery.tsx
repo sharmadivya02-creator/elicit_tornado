@@ -220,21 +220,18 @@ export const WorkGallery: React.FC<WorkGalleryProps> = ({ soundEnabled = true })
                                         onClick={() => handleItemClick(item)}
                                         className="group relative aspect-[4/3] overflow-hidden cursor-pointer bg-[#1a1a1a]"
                                     >
-                                        {/* Ripple Distortion Effect on Image */}
                                         <RippleDistortion
-
-                                            color="rgba(168, 85, 247, 0.3)" // Purple tint
-                                            intensity={0.3} // How strong the distortion is
-                                            speed={2} // How fast the ripples move
+                                            src={item.image}
+                                            brushSize={80}
+                                            strength={0.15}
+                                            swirl={1}
+                                            rings={3}
+                                            grayscale={false}
+                                            trigger="hover"
+                                            tint="#a855f7"
+                                            tintAmount={0.08}
                                             className="absolute inset-0 w-full h-full"
-                                        >
-                                            {/* Put the actual image tag INSIDE the RippleDistortion */}
-                                            <img
-                                                src={item.image}
-                                                alt={item.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </RippleDistortion>
+                                        />
 
                                         {/* ===== EXACT fromanother HOVER OVERLAY ===== */}
                                         <div
