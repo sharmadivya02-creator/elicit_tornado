@@ -8,7 +8,6 @@ import { useStore } from '@/store/useStore';
 import { cardVertexShader } from '@/shaders/card/vertex';
 import { cardFragmentShader } from '@/shaders/card/fragment';
 
-// Use placeholder images that definitely exist
 const IMAGES_BASE = [
   '/about/DSC_0074.jpg',
   '/about/DSC01089.jpg',
@@ -37,36 +36,34 @@ const IMAGES_BASE = [
 const IMAGES = [...IMAGES_BASE, ...IMAGES_BASE, ...IMAGES_BASE];
 
 export const CARD_COUNT = IMAGES.length;
-export const DEPTH_SPACING = 4.5;
+export const DEPTH_SPACING = 3.0;
 export const TUNNEL_DEPTH = CARD_COUNT * DEPTH_SPACING;
 
 // ==================== SPEED CONTROL ====================
-const SWIRL_SPEED = 0.05; // <-- ADJUST THIS VALUE
-const HEX_RADIUS = 4.2; // <-- ADJUST THIS VALUE
+const SWIRL_SPEED = 0.015;
+const HEX_RADIUS = 1.5;
 
 function createFallbackTexture() {
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 256;
+  canvas.width = 1024;
+  canvas.height = 768;
   const ctx = canvas.getContext('2d');
   if (ctx) {
-    // Dark gradient background
-    const gradient = ctx.createLinearGradient(0, 0, 256, 256);
+    const gradient = ctx.createLinearGradient(0, 0, 1024, 768);
     gradient.addColorStop(0, '#1a0a2e');
     gradient.addColorStop(1, '#0a0015');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillRect(0, 0, 1024, 768);
     
-    // Draw a simple icon
     ctx.fillStyle = '#7c3aed';
-    ctx.font = '40px sans-serif';
+    ctx.font = '120px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('✦', 128, 128);
+    ctx.fillText('✦', 512, 384);
     
     ctx.fillStyle = '#00f0ff';
-    ctx.font = '20px sans-serif';
-    ctx.fillText('ELICIT', 128, 180);
+    ctx.font = '60px sans-serif';
+    ctx.fillText('ELICIT', 512, 500);
   }
   return new THREE.CanvasTexture(canvas);
 }
@@ -81,13 +78,13 @@ function SingleCard({ index, imgUrl }: { index: number; imgUrl: string }) {
   const [aspectRatio, setAspectRatio] = useState<number>(1.5);
   const [textureLoaded, setTextureLoaded] = useState(false);
 
-  const particlesCount = 50;
+  const particlesCount = 40;
   const [particlePositions] = useState(() => {
     const pos = new Float32Array(particlesCount * 3);
     for(let i = 0; i < particlesCount; i++) {
-      pos[i*3] = (Math.random() - 0.5) * 25;     
-      pos[i*3+1] = (Math.random() - 0.5) * 25;   
-      pos[i*3+2] = (Math.random() - 0.5) * 10 - 4; 
+      pos[i*3] = (Math.random() - 0.5) * 12;     
+      pos[i*3+1] = (Math.random() - 0.5) * 12;   
+      pos[i*3+2] = (Math.random() - 0.5) * 4 - 2; 
     }
     return pos;
   });
@@ -104,6 +101,7 @@ function SingleCard({ index, imgUrl }: { index: number; imgUrl: string }) {
         loadedTex.generateMipmaps = true;
         loadedTex.minFilter = THREE.LinearMipmapLinearFilter;
         loadedTex.magFilter = THREE.LinearFilter;
+        loadedTex.anisotropy = 4;
         
         const img = loadedTex.image;
         if (img) {
@@ -118,7 +116,6 @@ function SingleCard({ index, imgUrl }: { index: number; imgUrl: string }) {
       undefined,
       (error) => {
         console.warn(`Could not load image: ${imgUrl}`, error);
-        // Keep using fallback texture
       }
     );
   }, [imgUrl]);
@@ -129,82 +126,89 @@ function SingleCard({ index, imgUrl }: { index: number; imgUrl: string }) {
     }
   }, [texture]);
 
-  const cardHeight = 2;
-  const cardWidth = cardHeight * aspectRatio;
-  const pixelMultiplier = 200;
+  const baseHeight = 3.2;
+  const baseWidth = baseHeight * aspectRatio;
+  const cardHeight = baseHeight;
+  const cardWidth = baseWidth;
 
   const initialZ = -index * DEPTH_SPACING;
-  const hexAngleOffset = index * 0.5;
+  const hexAngleOffset = index * 0.3;
 
   useFrame(({ camera, clock }) => {
     if (!meshRef.current || !groupRef.current) return;
 
     const progress = useStore.getState().scrollProgress || 0;
     
-    // Wrap progress for infinite scrolling
-    const maxProgress = CARD_COUNT * 0.6;
-    const wrappedProgress = progress % maxProgress;
-    const normalizedProgress = wrappedProgress / maxProgress;
+    // IMPORTANT: Use modulo to cycle through images continuously
+    const totalImages = CARD_COUNT;
+    const imageIndex = index;
     
-    // Calculate position in the scroll timeline
-    const cardPosition = index / CARD_COUNT;
-    let distanceFromCenter = normalizedProgress - cardPosition;
+    // Calculate where this image should be in the scroll cycle
+    // Each image gets a segment of the scroll progress
+    const segmentLength = 1 / totalImages;
+    const imageStart = imageIndex * segmentLength;
+    const imageEnd = (imageIndex + 1) * segmentLength;
     
-    // Handle wrapping - show images before and after the center
+    // Wrap progress so it loops infinitely
+    let wrappedProgress = progress % 1;
+    if (wrappedProgress < 0) wrappedProgress += 1;
+    
+    // Calculate distance from this image's segment
+    let distanceFromCenter = (wrappedProgress - imageStart) / segmentLength - 0.5;
+    
+    // Handle wrapping for seamless looping
     if (distanceFromCenter > 0.5) distanceFromCenter -= 1;
     if (distanceFromCenter < -0.5) distanceFromCenter += 1;
     
-    const transitionWidth = 0.3;
-    const rawActive = 1 - Math.abs(distanceFromCenter) / transitionWidth;
-    const activeFactor = Math.max(0, Math.min(1, rawActive));
-
-    // Scale based on distance
-    const scaleFactor = 0.4 + 0.6 * (1 - Math.abs(distanceFromCenter) * 1.2);
-    const finalScale = Math.max(0.2, Math.min(1.2, scaleFactor));
+    // Clamp distance for visibility
+    const clampedDistance = Math.max(-0.8, Math.min(0.8, distanceFromCenter));
+    
+    // Calculate opacity - image is visible when near center
+    const visibility = 1 - Math.abs(clampedDistance * 1.5);
+    const opacity = Math.max(0, Math.min(1, visibility));
+    
+    // Scale - stable with slight zoom on active
+    const scaleFactor = 0.8 + 0.2 * (1 - Math.abs(clampedDistance) * 0.5);
+    const finalScale = Math.max(0.7, Math.min(1.0, scaleFactor));
     
     const time = clock.getElapsedTime();
     
-    // Hexagonal movement
-const hexAngle = hexAngleOffset + time * SWIRL_SPEED + normalizedProgress * Math.PI * 2;
-
-// Amplitude grows as the image moves AWAY from center (0 at center,
-// full swing during transition), so the active image stays centered.
-const hexModulation = Math.min(1, Math.abs(distanceFromCenter) / transitionWidth);
-
-// VERTICAL hexagonal motion: full-radius sin drives Y (was X), reduced
-// cos drives X (was Y) — swings the image up/down instead of side-to-side.
-const hexY =Math.cos(hexAngle * 0.6 + 0.3) * HEX_RADIUS * 0.6 * hexModulation;
-const hexX = Math.sin(hexAngle) * HEX_RADIUS * hexModulation;
+    // Gentle movement
+    const hexAngle = hexAngleOffset + time * SWIRL_SPEED + wrappedProgress * Math.PI * 2;
+    const hexModulation = Math.min(0.5, Math.abs(clampedDistance) * 0.8);
     
-    const floatX = Math.sin(time * 0.3 + index * 0.5) * 0.2;
-    const floatY = Math.cos(time * 0.4 + index * 0.7) * 0.2;
+    const hexY = Math.sin(hexAngle * 0.5 + 0.3) * HEX_RADIUS * 0.3 * hexModulation;
+    const hexX = Math.cos(hexAngle * 0.4) * HEX_RADIUS * 0.2 * hexModulation;
     
-    const targetX = hexX + floatX * activeFactor;
-    const targetY = hexY + floatY * activeFactor;
-    const targetZ = initialZ + wrappedProgress * DEPTH_SPACING * 1.1;
+    const floatX = Math.sin(time * 0.08 + index * 0.5) * 0.03;
+    const floatY = Math.cos(time * 0.1 + index * 0.3) * 0.03;
     
-    meshRef.current.position.x += (targetX - meshRef.current.position.x) * 0.08;
-    meshRef.current.position.y += (targetY - meshRef.current.position.y) * 0.08;
-    meshRef.current.position.z += (targetZ - meshRef.current.position.z) * 0.08;
+    // Z position - images cycle through depth
+    const targetZ = initialZ * 0.2 + wrappedProgress * DEPTH_SPACING * 0.3;
+    const targetX = hexX + floatX;
+    const targetY = hexY + floatY;
     
-    meshRef.current.scale.setScalar(
-      meshRef.current.scale.x + (finalScale - meshRef.current.scale.x) * 0.08
-    );
+    // Smooth interpolation
+    meshRef.current.position.x += (targetX - meshRef.current.position.x) * 0.1;
+    meshRef.current.position.y += (targetY - meshRef.current.position.y) * 0.1;
+    meshRef.current.position.z += (targetZ - meshRef.current.position.z) * 0.1;
     
-    meshRef.current.rotation.z += (Math.sin(hexAngle * 0.5) * 0.04 - meshRef.current.rotation.z) * 0.04;
-    meshRef.current.rotation.y += (Math.cos(hexAngle * 0.3) * 0.03 - meshRef.current.rotation.y) * 0.04;
+    // Apply scale
+    meshRef.current.scale.setScalar(finalScale);
     
-    // Opacity based on distance from center
-    const visibilityFactor = Math.max(0, 1 - Math.abs(distanceFromCenter) * 1.5);
-    const opacity = Math.min(1, Math.max(0, visibilityFactor));
-    // material can be a single material or an array; set opacity safely
+    // Keep images facing camera
+    meshRef.current.rotation.z += (-meshRef.current.rotation.z) * 0.03;
+    meshRef.current.rotation.y += (-meshRef.current.rotation.y) * 0.03;
+    
+    meshRef.current.frustumCulled = false;
+    meshRef.current.renderOrder = 1;
+    
+    // Set opacity on material
     const meshMaterial = meshRef.current.material;
     const materials = Array.isArray(meshMaterial) ? meshMaterial : [meshMaterial];
     materials.forEach((m) => {
-      // some material types may not have opacity in their typings, so coerce
       (m as any).opacity = opacity;
-      // ensure transparent flag if opacity < 1
-      if (typeof (m as any).transparent !== 'undefined') (m as any).transparent = (opacity < 1) || !!(m as any).transparent;
+      (m as any).transparent = opacity < 1;
     });
     meshRef.current.visible = opacity > 0.01;
 
@@ -213,9 +217,9 @@ const hexX = Math.sin(hexAngle) * HEX_RADIUS * hexModulation;
       const posAttr = particlesRef.current.geometry.attributes.position;
       const positions = posAttr.array as Float32Array;
       
-      const driftX = targetX * 0.3;
-      const driftY = targetY * 0.3;
-      const driftZ = targetZ * 0.2;
+      const driftX = targetX * 0.15;
+      const driftY = targetY * 0.15;
+      const driftZ = targetZ * 0.1;
       
       for (let i = 0; i < particlesCount; i++) {
         const i3 = i * 3;
@@ -226,19 +230,19 @@ const hexX = Math.sin(hexAngle) * HEX_RADIUS * hexModulation;
       
       posAttr.needsUpdate = true;
       
-      (particlesRef.current.material as THREE.PointsMaterial).opacity = opacity * 0.5;
+      particlesRef.current.frustumCulled = false;
       
       particlesRef.current.position.set(
-        meshRef.current.position.x * 0.2,
-        meshRef.current.position.y * 0.2,
-        meshRef.current.position.z - 0.5
+        meshRef.current.position.x * 0.1,
+        meshRef.current.position.y * 0.1,
+        meshRef.current.position.z - 0.3
       );
     }
   });
 
   return (
     <group ref={groupRef}>
-      <mesh ref={meshRef}>
+      <mesh ref={meshRef} frustumCulled={false}>
         <planeGeometry args={[cardWidth, cardHeight, 32, 32]} />
         <shaderMaterial
           ref={materialRef}
@@ -248,13 +252,13 @@ const hexX = Math.sin(hexAngle) * HEX_RADIUS * hexModulation;
           side={THREE.DoubleSide}
           uniforms={{
             uTexture: { value: texture },
-            uResolution: { value: new THREE.Vector2(cardWidth * pixelMultiplier, cardHeight * pixelMultiplier) },
-            uRadius: { value: 24.0 },
+            uResolution: { value: new THREE.Vector2(cardWidth * 200, cardHeight * 200) },
+            uRadius: { value: 20.0 },
           }}
         />
       </mesh>
 
-      <points ref={particlesRef}>
+      <points ref={particlesRef} frustumCulled={false}>
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
@@ -264,10 +268,10 @@ const hexX = Math.sin(hexAngle) * HEX_RADIUS * hexModulation;
           />
         </bufferGeometry>
         <pointsMaterial 
-          size={0.08} 
+          size={0.04} 
           color="#00f0ff" 
           transparent={true} 
-          opacity={0.5} 
+          opacity={0.2} 
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
@@ -278,7 +282,7 @@ const hexX = Math.sin(hexAngle) * HEX_RADIUS * hexModulation;
 
 export default function PortfolioCards() {
   return (
-    <group position={[0, 0, -3]}>
+    <group position={[0, 0, 0]}>
       {IMAGES.map((imgUrl, index) => (
         <SingleCard key={`${imgUrl}-${index}`} index={index} imgUrl={imgUrl} />
       ))}

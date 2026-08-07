@@ -1,18 +1,21 @@
 // src/components/3d/CameraRig.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useStore } from '@/store/useStore';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TUNNEL_DEPTH } from './PortfolioCards';
+import * as THREE from 'three';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function CameraRig() {
   const { camera } = useThree();
   const setScrollProgress = useStore((state) => state.setScrollProgress);
+  
+  const velocityRef = useRef({ x: 0, y: 0, z: 0 });
 
   useEffect(() => {
     const st = ScrollTrigger.create({
@@ -33,18 +36,28 @@ export function CameraRig() {
   useFrame(() => {
     const progress = useStore.getState().scrollProgress;
     
-    // Camera moves through the tunnel
-    const targetZ = 10 - progress * TUNNEL_DEPTH * 0.8;
-    camera.position.z += (targetZ - camera.position.z) * 0.05;
+    // Camera stays stable - minimal movement
+    const targetZ = 6 - progress * 0.5; // Very slow Z movement
+    const targetY = 0 + Math.sin(progress * Math.PI * 0.1) * 0.2;
+    const targetX = Math.sin(progress * Math.PI * 2 * 0.05) * 0.1;
     
-    // Subtle camera sway
-    const swayX = Math.sin(progress * Math.PI * 2 * 0.3) * 0.2;
-    const swayY = Math.cos(progress * Math.PI * 2 * 0.2) * 0.1;
+    const damping = 0.95;
+    const springStrength = 0.05;
     
-    camera.position.x += (swayX - camera.position.x) * 0.03;
-    camera.position.y += (swayY - camera.position.y) * 0.03;
+    velocityRef.current.x += (targetX - camera.position.x) * springStrength;
+    velocityRef.current.y += (targetY - camera.position.y) * springStrength;
+    velocityRef.current.z += (targetZ - camera.position.z) * springStrength;
+    
+    velocityRef.current.x *= damping;
+    velocityRef.current.y *= damping;
+    velocityRef.current.z *= damping;
+    
+    camera.position.x += velocityRef.current.x;
+    camera.position.y += velocityRef.current.y;
+    camera.position.z += velocityRef.current.z;
 
-    camera.lookAt(0, 0, camera.position.z - 15);
+    const lookTarget = new THREE.Vector3(0, 0, camera.position.z - 8);
+    camera.lookAt(lookTarget);
   });
 
   return null;
