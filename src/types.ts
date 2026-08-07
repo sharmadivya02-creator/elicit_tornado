@@ -1,4 +1,6 @@
-export type ActiveTab = 'home' | 'about' | 'events' | 'gallery' | 'sponsors' | 'contact' | 'team' | 'dev-team';
+
+
+export type ActiveTab = 'home' | 'about' | 'events' | 'sponsors' | 'contact' | 'team' | 'dev-team';
 
 export interface ExplorerState {
   level: number;
