@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { ActiveTab, ExplorerState } from '../types';
-import { SplashCursor } from './SplashCursor';
-import { LetterGlitch } from './LetterGlitch';
+import SplashCursor from './SplashCursor';
+import LetterGlitch from './LetterGlitch';
 import { CarouselGrid } from './CarouselGrid';
 
 interface AboutProps {
@@ -30,15 +30,9 @@ export const AboutView: React.FC<AboutProps> = ({ state, addXp, completeMission,
   }, []);
 
   return (
-    <div className="w-full relative min-h-screen bg-black overflow-hidden">
-      {/* Background Effects */}
-      <LetterGlitch
-        glitchColors={['#5227FF', '#7cff67', '#ff6b6b']}
-        glitchSpeed={50}
-        centerVignette
-        outerVignette={false}
-        smooth
-      />
+    <div className="w-full min-h-screen bg-black overflow-hidden">
+
+      {/* SplashCursor — full fluid WebGL sim, fixed canvas, pointer-events none */}
       <SplashCursor
         SIM_RESOLUTION={128}
         DYE_RESOLUTION={1440}
@@ -49,34 +43,45 @@ export const AboutView: React.FC<AboutProps> = ({ state, addXp, completeMission,
         SPLAT_RADIUS={0.2}
         SPLAT_FORCE={6000}
         COLOR_UPDATE_SPEED={10}
+        TRANSPARENT={true}
       />
 
-      {/* Content Layer */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
-        <div className="grid grid-cols-2 gap-16 items-start">
-          {/* Left: Carousel */}
-          <div>
-            <CarouselGrid
-              images={ELICIT_IMAGES}
-              title="Opening Ceremony"
-              category="Ceremony"
-              description="The grand inauguration of ELICIT '26 — a celebration of technology, innovation, and community spirit."
-            />
-          </div>
+      {/* LetterGlitch — full character rain canvas, fills its container */}
+      {/* Carousels: 75vh */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-16" style={{ height: '75vh' }}>
+        <CarouselGrid
+          images={ELICIT_IMAGES}
+          title="Opening Ceremony"
+          category="Ceremony"
+          description="The grand inauguration of ELICIT '26 — a celebration of technology, innovation, and community spirit."
+        />
+      </div>
 
-          {/* Right: Additional Content */}
-          <div className="space-y-12">
-            <div>
-              <h3 className="text-2xl font-bold text-white mb-4">About ELICIT '26</h3>
-              <p className="text-white/60 text-sm leading-relaxed">
-                The biggest techfest of MUJ, celebrating 10 years of ACM and the spirit of innovation. 
-                A fest that blends creativity with imagination, bringing together builders, dreamers, 
-                and explorers pushing the edges of code, design, and technology.
-              </p>
-            </div>
+      {/* About text + LetterGlitch background — separate section below carousels */}
+      <div className="relative z-10" style={{ minHeight: '300px' }}>
+        {/* LetterGlitch fills this block */}
+        <div className="absolute inset-0">
+          <LetterGlitch
+            glitchColors={['#5227FF', '#7cff67', '#ff6b6b']}
+            glitchSpeed={50}
+            centerVignette={false}
+            outerVignette={false}
+            smooth
+          />
+        </div>
+        {/* About text centered over LetterGlitch */}
+        <div className="relative z-10 flex items-center justify-center px-8 py-20">
+          <div className="max-w-2xl text-center">
+            <h3 className="text-2xl font-bold text-white mb-4">About ELICIT '26</h3>
+            <p className="text-white/80 text-sm leading-relaxed">
+              The biggest techfest of MUJ, celebrating 10 years of ACM and the spirit of innovation.
+              A fest that blends creativity with imagination, bringing together builders, dreamers,
+              and explorers pushing the edges of code, design, and technology.
+            </p>
           </div>
         </div>
       </div>
+
     </div>
   );
 };
