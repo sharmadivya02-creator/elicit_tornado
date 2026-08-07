@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { Orbitron } from "next/font/google";
+import { Orbitron, Geist } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -20,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${orbitron.variable} min-h-screen`}>
+    <html lang="en" className={cn("min-h-screen", orbitron.variable, "font-sans", geist.variable)}>
       <body className="antialiased min-h-screen bg-black text-white overflow-x-hidden">
         {children}
       </body>
